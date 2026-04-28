@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Analítico - Weg</title>
+  <style>
+    :root {
+      /* Identidade Visual Weg & Tema Claro */
+      --weg-blue: #005eb8;
+      --bg-page: #f5f7fa;
+      --bg-card: #ffffff;
+      --text-primary: #1a1d23;
+      --text-secondary: #6c757d;
+      --border-light: #e2e6ea;
+      
+      /* Cores dos Processos */
+      --accent-est: #005eb8;   /* Azul Weg */
+      --accent-nano: #d9531e;  /* Laranja Industrial */
+      
+      --font-main: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      background: var(--bg-page); 
+      color: var(--text-primary); 
+      font-family: var(--font-main); 
+      height: 100vh; 
+      overflow: hidden; 
+      display: flex; 
+      flex-direction: column; 
+    }
+
+    /* HEADER */
+    header { 
+      background: #fff; 
+      padding: 16px 32px; 
+      border-bottom: 2px solid var(--border-light); 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      z-index: 20;
+    }
+    .logo-weg { 
+      font-size: 28px; 
+      font-weight: 900; 
+      color: var(--weg-blue); 
+      letter-spacing: -1px; 
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .page-title {
+      font-size: 18px;
+      color: var(--text-secondary);
+      border-left: 2px solid var(--border-light);
+      padding-left: 15px;
+      margin-left: 10px;
+    }
+    .clock { 
+      font-size: 20px; 
+      font-weight: 600; 
+      background: #f0f4f8; 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* DASHBOARD GRID */
+    .dashboard { 
+      flex: 1; 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 24px; 
+      padding: 24px; 
+      overflow: hidden; 
+    }
+    
+    /* CARDS DE PROCESSO */
+    .panel { 
+      background: var(--bg-card); 
+      border-radius: 12px; 
+      border: 1px solid var(--border-light); 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+      transition: transform 0.2s;
+    }
+    .panel.est { border-top: 5px solid var(--accent-est); }
+    .panel.nano { border-top: 5px solid var(--accent-nano); }
+
+    .panel-header { 
+      padding: 16px 20px; 
+      border-bottom: 1px solid var(--border-light); 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      background: #fafbfc; 
+    }
+    .panel-title { 
+      font-size: 20px; 
+      font-weight: 800; 
+      text-transform: uppercase; 
+    }
+    .panel-title.est { color: var(--accent-est); }
+    .panel-title.nano { color: var(--accent-nano); }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #e8f5e9;
+      color: #28a745;
+      border: 1px solid #c8e6c9;
+    }
+
+    /* INDICADOR DE SLIDE */
+    .slide-indicator { 
+      padding: 8px 0; 
+      background: #fdfdfd; 
+      text-align: center; 
+      border-bottom: 1px solid var(--border-light); 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .slide-name { 
+      font-weight: 600; 
+      color: var(--text-primary); 
+      font-size: 16px; 
+    }
+    .dots { display: flex; gap: 4px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #dde2e8; }
+    .dot.active { background: var(--weg-blue); transform: scale(1.2); }
+
+    /* ÁREA DO GRÁFICO */
+    .chart-area { 
+      flex: 1; 
+      padding: 16px; 
+      background: #f8f9fb; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      position: relative;
+    }
+    img.graph-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      background: #fff;
+      transition: opacity 0.3s ease;
+    }
+    img.graph-img.loading { opacity: 0.5; }
+
+    footer { 
+      padding: 10px 32px; 
+      text-align: right; 
+      color: var(--text-secondary); 
+      font-size: 12px; 
+      background: #fff; 
+      border-top: 1px solid var(--border-light); 
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div style="display:flex; align-items:center;">
+      <div class="logo-weg">WEG<span style="font-weight:300; color:#666;">.</span></div>
+      <div class="page-title">Controle Analítico de Processos</div>
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <div class="dashboard">
+    
+    <!-- PAINEL 1: ESTANHAAGEM -->
+    <div class="panel est">
+      <div class="panel-header">
+        <div class="panel-title est">🔷 Estanhaagem</div>
+        <span class="status-badge">✅ OK</span>
+      </div>
+      <div class="slide-indicator">
+        <div class="dots" id="dots-est"></div>
+        <div class="slide-name" id="slide-name-est">Carregando...</div>
+      </div>
+      <div class="chart-area">
+        <img id="img-est" class="graph-img" alt="Gráfico Estanhaagem" />
+      </div>
+    </div>
+
+    <!-- PAINEL 2: ATIVAÇÃO / NÍQUEL -->
+    <div class="panel nano">
+      <div class="panel-header">
+        <div class="panel-title nano">🟠 Ativação / Níquel</div>
+        <span class="status-badge">✅ OK</span>
+      </div>
+      <div class="slide-indicator">
+        <div class="dots" id="dots-nano"></div>
+        <div class="slide-name" id="slide-name-nano">Carregando...</div>
+      </div>
+      <div class="chart-area">
+        <img id="img-nano" class="graph-img" alt="Gráfico Ativação/Níquel" />
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    Weg | Dashboard Analítico v2.0 | Sync: <span id="last-sync">--:--</span>
+  </footer>
+
+  <script>
+    // ==========================================
+    // CONFIGURAÇÃO DOS PROCESSOS E ABAS
+    // ==========================================
+    const CONFIG = {
+      baseUrl: "https://raw.githubusercontent.com/denilsonsiewert/dashboard-weg-banhos/main/",
+      processes: {
+        est: { // Estanhaagem
+          interval: 30000, // 30 segundos por slide
+          tabs: [
+            { name: 'Desengraxe',       img: 'img/Graf_Des.png' },
+            { name: 'Estanhagem A',     img: 'img/Graf_Estanhagem_A.png' },
+            { name: 'Estanhagem B',     img: 'img/Graf_Estanhagem_B.png' }
+          ]
+        },
+        nano: { // Ativação / Níquel
+          interval: 35000, // 35 segundos (desfasado)
+          tabs: [
+            { name: 'Ativação Tanque 5', img: 'img/Graf_Ativacao_-_Tanque_5.png' },
+            { name: 'Ativação Tanque 6', img: 'img/Graf_Ativacao_-_Tanque_6.png' },
+            { name: 'Níquel WATT',       img: 'img/Graf_Niquel_WATT.png' }
+          ]
+        }
+      }
+    };
+
+    let currentSlide = { est: 0, nano: 0 };
+
+    // Inicializa os indicadores visuais (bolinhas)
+    function initIndicators() {
+      ['est', 'nano'].forEach(key => {
+        const container = document.getElementById(`dots-${key}`);
+        CONFIG.processes[key].tabs.forEach((_, idx) => {
+          const dot = document.createElement('div');
+          dot.className = 'dot';
+          if(idx === 0) dot.classList.add('active');
+          container.appendChild(dot);
+        });
+      });
+    }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toLocaleTimeString('pt-BR');
+      document.getElementById('last-sync').textContent = now.toLocaleTimeString('pt-BR');
+    }
+
+    function updateSlide(key) {
+      const proc = CONFIG.processes[key];
+      const idx = currentSlide[key];
+      const tab = proc.tabs[idx];
+      
+      // Atualiza nome e bolinhas
+      document.getElementById(`slide-name-${key}`).textContent = tab.name;
+      const dots = document.querySelectorAll(`#dots-${key} .dot`);
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      
+      // Carrega imagem com cache buster
+      const imgElement = document.getElementById(`img-${key}`);
+      imgElement.classList.add('loading');
+      
+      // Usa setTimeout pequeno para garantir a transição visual
+      setTimeout(() => {
+        imgElement.src = `${CONFIG.baseUrl}${tab.img}?t=${Date.now()}`;
+        imgElement.onload = () => imgElement.classList.remove('loading');
+      }, 200);
+    }
+
+    function startRotation(key) {
+      updateSlide(key);
+      setInterval(() => {
+        currentSlide[key] = (currentSlide[key] + 1) % CONFIG.processes[key].tabs.length;
+        updateSlide(key);
+      }, CONFIG.processes[key].interval);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initIndicators();
+      updateClock();
+      startRotation('est');
+      startRotation('nano');
+      setInterval(updateClock, 1000);
+    });
+  </script>
+</body>
+</html>
